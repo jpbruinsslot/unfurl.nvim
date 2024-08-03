@@ -6,6 +6,15 @@ local function extract_video_id(url)
 	return url:match("v=([^&]+)") or url:match("youtu%.be/([^?]+)") or url:match("youtube%.com/embed/([^?]+)")
 end
 
+-- Extracts the domain from a URL
+local function parse_domain(url)
+	local domain = url:gsub("^https?://", ""):match("([^/]+)")
+	if domain:find("^www%.") then
+		domain = domain:gsub("^www%.", "")
+	end
+	return domain
+end
+
 local function fetch_html_title(url)
 	local response = curl.get(url)
 	if response.status == 200 then
@@ -69,7 +78,9 @@ unfurl.webpage_url = function()
 
 	title = unescape_html_entities(title)
 
-	local markdown_url = string.format("[%s](%s)", title, url)
+	local domain = parse_domain(url)
+
+	local markdown_url = string.format("[%s - %s](%s)", domain, title, url)
 	vim.api.nvim_put({ markdown_url }, "l", true, true)
 end
 
