@@ -17,6 +17,24 @@ local function fetch_html_title(url)
 	return nil
 end
 
+local function unescape_html_entities(text)
+	local html_entities = {
+		["&amp;"] = "&",
+		["&lt;"] = "<",
+		["&gt;"] = ">",
+		["&quot;"] = '"',
+		["&apos;"] = "'",
+		["&#39;"] = "'",
+		["&nbsp;"] = " ",
+	}
+
+	for entity, char in pairs(html_entities) do
+		text = text:gsub(entity, char)
+	end
+
+	return text
+end
+
 unfurl.youtube_url = function()
 	local url = vim.fn.input("Enter YouTube URL: ")
 	local video_id = extract_video_id(url)
@@ -35,6 +53,8 @@ unfurl.youtube_url = function()
 	-- Remove " - YouTube" from the end of the title
 	title = title:gsub("%s+%- YouTube$", "")
 
+	title = unescape_html_entities(title)
+
 	local markdown_url = string.format("[%s](%s)", title, full_url)
 	vim.api.nvim_put({ markdown_url }, "l", true, true)
 end
@@ -46,6 +66,8 @@ unfurl.webpage_url = function()
 		print("Failed to fetch webpage title")
 		return
 	end
+
+	title = unescape_html_entities(title)
 
 	local markdown_url = string.format("[%s](%s)", title, url)
 	vim.api.nvim_put({ markdown_url }, "l", true, true)
