@@ -44,6 +44,47 @@ local function unescape_html_entities(text)
 	return text
 end
 
+unfurl.youtube_timestamp = function()
+	local url = vim.fn.input("Enter YouTube URL: ")
+	local video_id = extract_video_id(url)
+	if not video_id then
+		print("Invalid YouTube URL")
+		return
+	end
+
+	local timestamp = vim.fn.input("Enter timestamp (e.g. 2:34:30): ")
+	local hours, minutes, seconds = 0, 0, 0
+
+	-- Determine the format of the timestamp
+	if timestamp:match("%d+:%d+:%d+") then
+		hours, minutes, seconds = timestamp:match("(%d+):(%d+):(%d+)")
+	elseif timestamp:match("%d+:%d+") then
+		minutes, seconds = timestamp:match("(%d+):(%d+)")
+	else
+		print("Invalid timestamp")
+		return
+	end
+
+	-- Construct the full URL with the timestamp
+	local full_url = string.format("https://youtu.be/watch?v=%s&t=%dh%dm%ds", video_id, hours, minutes, seconds)
+
+	-- Pad hours, minutes, and seconds with 0 if necessary
+	hours = string.format("%02d", hours)
+	minutes = string.format("%02d", minutes)
+	seconds = string.format("%02d", seconds)
+
+	-- Generate the markdown URL
+	local markdown_url
+	if tonumber(hours) > 0 then
+		markdown_url = string.format("[%s:%s:%s](%s)", hours, minutes, seconds, full_url)
+	else
+		markdown_url = string.format("[%s:%s](%s)", minutes, seconds, full_url)
+	end
+
+	-- Insert the markdown URL
+	vim.api.nvim_put({ markdown_url }, "l", true, true)
+end
+
 unfurl.youtube_url = function()
 	local url = vim.fn.input("Enter YouTube URL: ")
 	local video_id = extract_video_id(url)
@@ -89,6 +130,10 @@ function unfurl.setup(opts)
 
 	vim.keymap.set("n", "<leader>yt", function()
 		unfurl.youtube_url()
+	end, { noremap = true, silent = true })
+
+	vim.keymap.set("n", "<leader>ts", function()
+		unfurl.youtube_timestamp()
 	end, { noremap = true, silent = true })
 
 	vim.keymap.set("n", "<leader>url", function()
