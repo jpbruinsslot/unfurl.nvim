@@ -1,6 +1,7 @@
 local curl = require("plenary.curl")
 
 local unfurl = {}
+local last_url = nil
 
 local function extract_video_id(url)
 	return url:match("v=([^&]+)") or url:match("youtu%.be/([^?]+)") or url:match("youtube%.com/embed/([^?]+)")
@@ -45,13 +46,29 @@ local function unescape_html_entities(text)
 end
 
 unfurl.youtube_timestamp = function()
-	local url = vim.fn.input("Enter YouTube URL: ")
+	-- Check if a URL has been previously entered
+	local url
+	if last_url then
+		-- Ask if the user wants to use the cached URL or enter a new one
+		local use_cached = vim.fn.input("Use the last URL (" .. last_url .. ")? (y/n): ")
+		if use_cached:lower() == "y" then
+			url = last_url
+		else
+			url = vim.fn.input("Enter YouTube URL: ")
+		end
+	else
+		url = vim.fn.input("Enter YouTube URL: ")
+	end
+
+	-- Validate and cache the URL
 	local video_id = extract_video_id(url)
 	if not video_id then
 		print("Invalid YouTube URL")
 		return
 	end
+	last_url = url -- Cache the valid URL
 
+	-- Get timestamp input
 	local timestamp = vim.fn.input("Enter timestamp (e.g. 2:34:30): ")
 	local hours, minutes, seconds = 0, 0, 0
 
